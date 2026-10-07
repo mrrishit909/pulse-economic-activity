@@ -1,0 +1,1444 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "PULSE API",
+  "version": "1.0.0",
+  "description": "Synthetic trade flows, port congestion and regional activity nowcasts. Anonymous calls see data delayed by 30 days; a bearer token sees the latest. Mutations need an Idempotency-Key. Errors are {error:{code,message,traceId}}. Lists page with ?limit and ?cursor (nextCursor)."
+ },
+ "components": {
+  "securitySchemes": {
+   "bearer": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  },
+  "schemas": {}
+ },
+ "paths": {
+  "/v1/bundle": {
+   "get": {
+    "summary": "The whole synthetic bundle the web app loads (gzip)",
+    "tags": [
+     "data"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "enum": [
+        "outage"
+       ]
+      },
+      "in": "query",
+      "name": "simulate",
+      "required": false
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response"
+     }
+    }
+   }
+  },
+  "/v1/flows": {
+   "get": {
+    "summary": "Lane-day cargo flows (kt) with value and confidence",
+    "tags": [
+     "flows"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "query",
+      "name": "commodity",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "from",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "to",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "date",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 2000,
+       "default": 500
+      },
+      "in": "query",
+      "name": "limit",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "query",
+      "name": "cursor",
+      "required": false
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "items"
+         ],
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "required": [
+             "laneId",
+             "from",
+             "to",
+             "commodity",
+             "date",
+             "kt"
+            ],
+            "properties": {
+             "laneId": {
+              "type": "integer"
+             },
+             "from": {
+              "type": "string"
+             },
+             "to": {
+              "type": "string"
+             },
+             "commodity": {
+              "type": "string"
+             },
+             "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+             },
+             "kt": {
+              "type": "number"
+             },
+             "valueUsd": {
+              "type": "number"
+             },
+             "confidence": {
+              "type": "number"
+             },
+             "voyages": {
+              "type": "integer"
+             }
+            }
+           }
+          },
+          "nextCursor": {
+           "type": [
+            "null",
+            "string"
+           ]
+          },
+          "delayedTo": {
+           "type": [
+            "null",
+            "string"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/ports": {
+   "get": {
+    "summary": "Ports, optionally within km of a point (PostGIS)",
+    "tags": [
+     "ports"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^-?[\\d.]+,-?[\\d.]+$"
+      },
+      "in": "query",
+      "name": "near",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "number",
+       "minimum": 1,
+       "maximum": 20000,
+       "default": 500
+      },
+      "in": "query",
+      "name": "km",
+      "required": false
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/ports/{id}/activity": {
+   "get": {
+    "summary": "Daily calls, dwell distribution and congestion score",
+    "tags": [
+     "ports"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "from",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "to",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "path",
+      "name": "id",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "port": {
+           "type": "object",
+           "additionalProperties": true
+          },
+          "days": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+             },
+             "calls": {
+              "type": "integer"
+             },
+             "dwellMedianDays": {
+              "type": [
+               "null",
+               "number"
+              ]
+             },
+             "dwellP90Days": {
+              "type": [
+               "null",
+               "number"
+              ]
+             },
+             "inPort": {
+              "type": "integer"
+             },
+             "congestionZ": {
+              "type": [
+               "null",
+               "number"
+              ]
+             },
+             "confidence": {
+              "type": "string"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/regions/{id}/pulse": {
+   "get": {
+    "summary": "Daily regional pulse index with 80% band, confidence and per-series contributions",
+    "tags": [
+     "regions"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "from",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "to",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "path",
+      "name": "id",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "region": {
+           "type": "string"
+          },
+          "days": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+             },
+             "index": {
+              "type": "number"
+             },
+             "lo": {
+              "type": "number"
+             },
+             "hi": {
+              "type": "number"
+             },
+             "confidence": {
+              "type": "string"
+             },
+             "components": {
+              "type": "object",
+              "additionalProperties": {
+               "type": "number"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/commodities/{code}": {
+   "get": {
+    "summary": "Commodity totals, route decomposition and a 14-day forecast with its interval",
+    "tags": [
+     "flows"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "path",
+      "name": "code",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/playback": {
+   "post": {
+    "summary": "Pre-aggregated frames for timeline playback (lane volumes and port congestion per step)",
+    "tags": [
+     "flows"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "from",
+         "to"
+        ],
+        "properties": {
+         "from": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+         },
+         "to": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+         },
+         "stepDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31,
+          "default": 7
+         },
+         "commodity": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "frames": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/nowcasts": {
+   "get": {
+    "summary": "Rolling-origin nowcasts made at each month end, with the official value once published",
+    "tags": [
+     "regions"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "query",
+      "name": "region",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}$"
+      },
+      "in": "query",
+      "name": "month",
+      "required": false
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/alerts": {
+   "post": {
+    "summary": "Create an alert on abnormal port congestion; replays it over the history and notifies",
+    "tags": [
+     "alerts"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "name",
+         "port",
+         "minZ",
+         "minConfidence",
+         "channel",
+         "target"
+        ],
+        "properties": {
+         "name": {
+          "type": "string",
+          "maxLength": 80
+         },
+         "port": {
+          "type": "string"
+         },
+         "minZ": {
+          "type": "number"
+         },
+         "minConfidence": {
+          "type": "string"
+         },
+         "channel": {
+          "type": "string"
+         },
+         "target": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "minLength": 8,
+       "maxLength": 128
+      },
+      "in": "header",
+      "name": "idempotency-key",
+      "required": true
+     }
+    ],
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "rule": {
+           "type": "object",
+           "additionalProperties": true
+          },
+          "deliveries": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "alerts"
+    ],
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/ingest/vessel-events": {
+   "post": {
+    "summary": "Upload up to 5,000 private vessel events; each is resolved to a vessel and a port",
+    "tags": [
+     "ingest"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "events"
+        ],
+        "properties": {
+         "events": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5000,
+          "items": {
+           "type": "object",
+           "required": [
+            "event",
+            "t"
+           ],
+           "properties": {
+            "imo": {
+             "type": "string"
+            },
+            "mmsi": {
+             "type": "string"
+            },
+            "name": {
+             "type": "string"
+            },
+            "port": {
+             "type": "string"
+            },
+            "lat": {
+             "type": "number"
+            },
+            "lon": {
+             "type": "number"
+            },
+            "event": {
+             "type": "string",
+             "enum": [
+              "arrival",
+              "departure"
+             ]
+            },
+            "t": {
+             "type": "string",
+             "format": "date-time"
+            },
+            "draught": {
+             "type": "number"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "schema": {
+       "type": "string",
+       "minLength": 8,
+       "maxLength": 128
+      },
+      "in": "header",
+      "name": "idempotency-key",
+      "required": true
+     }
+    ],
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "accepted": {
+           "type": "integer"
+          },
+          "resolvedVessel": {
+           "type": "integer"
+          },
+          "resolvedPort": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/vessel-events": {
+   "get": {
+    "summary": "Raw events visible to the caller (shared feed + own uploads), with resolution",
+    "tags": [
+     "ingest"
+    ],
+    "parameters": [
+     {
+      "schema": {
+       "type": "string"
+      },
+      "in": "query",
+      "name": "port",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "in": "query",
+      "name": "from",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "in": "query",
+      "name": "to",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "string",
+       "enum": [
+        "shared",
+        "own"
+       ]
+      },
+      "in": "query",
+      "name": "source",
+      "required": false
+     },
+     {
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 1000,
+       "default": 100
+      },
+      "in": "query",
+      "name": "limit",
+      "required": false
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/audit": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "additionalProperties": true
+           }
+          },
+          "chainValid": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Default Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "object",
+           "required": [
+            "code",
+            "message"
+           ],
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "traceId": {
+             "type": "string"
+            },
+            "details": {}
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "servers": [
+  {
+   "url": "http://localhost:8460"
+  }
+ ]
+}

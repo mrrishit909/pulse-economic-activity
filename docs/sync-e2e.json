@@ -1,0 +1,5 @@
+{
+ "speedDaysPerSecond": 30,
+ "samples": 40,
+ "worstSkewMs": 0
+}

@@ -1,0 +1,24 @@
+{
+ "when": "2026-10-06, MacBook Pro (Apple silicon); API as one Node 24 process on the host, Postgres 16 + PostGIS in Docker; client on the same machine",
+ "command": "RATE_LIMIT=1000000 PORT=8463 node apps/api/src/main.ts & node tests/performance/load.ts http://127.0.0.1:8463 32 10 4 15",
+ "base": "http://127.0.0.1:8463",
+ "reads": {
+  "requests": 21389,
+  "rps": 2139,
+  "p50": 13.7,
+  "p95": 21.4,
+  "p99": 33.1,
+  "errors": 0
+ },
+ "ingest": {
+  "clients": 4,
+  "batches": 199,
+  "rows": 995000,
+  "rowsPerSec": 66333,
+  "rowsPerDay": 5731200000,
+  "batchP50Ms": 284,
+  "batchP95Ms": 433,
+  "errors": 0
+ },
+ "caveat": "same-machine client and server; ingestion rows are synthetic upload rows resolved by alias/geofence/IMO on the way in; no cross-host test was run"
+}
